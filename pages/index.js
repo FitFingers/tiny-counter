@@ -5,7 +5,15 @@ import styles from "../styles/Home.module.css";
 export default function Home() {
   const {
     metamask: { connectWallet, account, isValidNetwork },
-    contract: { txCost, count, decrement, increment, setCount, withdraw },
+    contract: {
+      txCost,
+      count,
+      decrement,
+      increment,
+      setCount,
+      withdraw,
+      owner,
+    },
   } = useMetaMask();
   return (
     <div className={styles.container}>
@@ -50,7 +58,10 @@ export default function Home() {
                 <p>Transaction cost: {txCost / (10 ** 9 * 10 ** 9)} ETH</p>
               </div>
 
-              <div onClick={withdraw} className={styles.card}>
+              <div
+                onClick={withdraw}
+                className={owner === account ? styles.card : styles.disabled}
+              >
                 <h2>Withdraw</h2>
                 <p>Only owner</p>
               </div>

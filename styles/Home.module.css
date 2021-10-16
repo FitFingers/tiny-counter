@@ -78,7 +78,8 @@
   margin-top: 3rem;
 }
 
-.card {
+.card,
+.disabled {
   margin: 1rem;
   padding: 1.5rem;
   text-align: left;
@@ -98,19 +99,27 @@
   border-color: #0070f3;
 }
 
-.card h2 {
+.card h2,
+.disabled h2 {
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
 }
 
-.card p {
+.card p,
+.disabled p {
   margin: 0;
   font-size: 1.25rem;
   line-height: 1.5;
 }
 
-.card * {
+.card *,
+.disabled * {
   text-align: center;
+}
+
+.disabled {
+  cursor: not-allowed;
+  color: #aaaaaa;
 }
 
 .display {

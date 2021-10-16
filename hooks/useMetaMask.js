@@ -166,13 +166,8 @@ export function MetaMaskContext({ children }) {
     }
   }, []);
 
-  useEffect(() => {
-    try {
-      refreshVariables();
-    } catch (err) {
-      console.debug("DEBUG catch error", { err });
-    }
-  }, [contract, network]);
+  // update the variables whenever something about metamask changes
+  useEffect(() => refreshVariables(), [contract, network, account]);
 
   return (
     <Context.Provider
