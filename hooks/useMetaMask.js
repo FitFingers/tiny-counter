@@ -6,6 +6,7 @@ import {
   useReducer,
 } from "react";
 import Web3 from "web3";
+import ABI from "util/abi.json";
 
 // ===================================================
 // USECONTEXT => ACCESS COMPONENT, HANDLERS
@@ -31,12 +32,21 @@ export function MetaMaskContext({ children }) {
   // STATE
   // ===================================================
   // metamask / web3 state
-  const [{ account, network, isValidNetwork }, updateMetaMask] = useReducer(
-    (state, moreState) => ({ ...state, ...moreState }),
-    {
+  const [{ account, network, isValidNetwork, contract }, updateMetaMask] =
+    useReducer((state, moreState) => ({ ...state, ...moreState }), {
       account: null,
       network: null,
       isValidNetwork: false,
+      contract: null,
+    });
+
+  // contract state and variables
+  const [{ count, txCost, owner }, updateContractVars] = useReducer(
+    (state, moreState) => ({ ...state, ...moreState }),
+    {
+      count: null,
+      txCost: null,
+      owner: null,
     }
   );
 
@@ -60,7 +70,6 @@ export function MetaMaskContext({ children }) {
   // connect to user's wallet
   const connectWallet = useCallback(async () => {
     try {
-      console.log("DEBUG connect ", {});
       await connectAccount();
       await connectNetwork();
     } catch (err) {
@@ -70,7 +79,7 @@ export function MetaMaskContext({ children }) {
 
   // read the requested value from the provided contract
   const readVariable = useCallback(
-    async (functionName, contract) => {
+    async (functionName) => {
       try {
         if (!contract?.methods) throw new Error("No contract defined");
         const callback = contract.methods[functionName];
@@ -80,27 +89,49 @@ export function MetaMaskContext({ children }) {
         console.warn(`Couldn't read ${functionName} from contract`, err);
       }
     },
-    [account]
+    [account, contract]
   );
 
   // function to (re)initialise contract variables
-  const refreshVariables = useCallback(async (manual) => {
-    if (!network || !isValidNetwork) return;
-
-    // update address book values
-    if (isAuthenticated) {
-      try {
-        updateAddressBook({
-          contactList: await readVariable(
-            "readAllContacts",
-            addressBookContract
-          ),
-        });
-      } catch (err) {
-        console.log("DEBUG", { err });
-      }
+  const refreshVariables = useCallback(async () => {
+    if (!isValidNetwork) return;
+    try {
+      updateContractVars({
+        count: await readVariable("count"),
+        txCost: await readVariable("txCost"),
+        owner: await readVariable("owner"),
+      });
+    } catch (err) {
+      console.warn("DEBUG refresh error", { err });
     }
-  }, []);
+  }, [readVariable, isValidNetwork, account, network]);
+
+  // contract functions
+  const decrement = useCallback(async () => {
+    if (!contract?.methods) return;
+    await contract?.methods?.decrement().send({ from: account });
+    await refreshVariables();
+  }, [contract, refreshVariables]);
+
+  const increment = useCallback(async () => {
+    if (!contract?.methods) return;
+    await contract?.methods?.increment().send({ from: account });
+    await refreshVariables();
+  }, [refreshVariables, contract]);
+
+  const setCount = useCallback(async () => {
+    if (!contract?.methods) return;
+    const n = Number(window?.prompt());
+    if (!n && n !== "0") return;
+    await contract?.methods?.setCount(n).send({ from: account, value: txCost });
+    await refreshVariables();
+  }, [refreshVariables, contract, txCost]);
+
+  const withdraw = useCallback(async () => {
+    if (!contract?.methods) return;
+    await contract?.methods?.withdraw().send({ from: account });
+    await refreshVariables();
+  }, [refreshVariables, contract]);
 
   // EFFECT HOOKS
   // ===================================================
@@ -120,13 +151,47 @@ export function MetaMaskContext({ children }) {
     }
   }, []);
 
+  // use contract
+  useEffect(() => {
+    try {
+      const _contract = new web3.eth.Contract(
+        ABI,
+        process.env.NEXT_PUBLIC_RINKEBY_CONTRACT_ADDRESS
+      );
+      updateMetaMask({
+        contract: _contract,
+      });
+    } catch (err) {
+      console.debug("DEBUG caught useContract error", { err });
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      refreshVariables();
+    } catch (err) {
+      console.debug("DEBUG catch error", { err });
+    }
+  }, [contract, network]);
+
   return (
     <Context.Provider
       value={{
-        account,
-        network,
-        isValidNetwork,
-        connectWallet,
+        metamask: {
+          account,
+          network,
+          isValidNetwork,
+          connectWallet,
+        },
+        contract: {
+          count,
+          txCost,
+          owner,
+          decrement,
+          increment,
+          setCount,
+          withdraw,
+        },
       }}
     >
       {children}

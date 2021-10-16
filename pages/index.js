@@ -1,22 +1,12 @@
 import Head from "next/head";
-import { useCallback } from "react";
 import useMetaMask from "../hooks/useMetaMask";
 import styles from "../styles/Home.module.css";
 
 export default function Home() {
-  const { connectWallet, account, isValidNetwork, ...metamask } = useMetaMask();
-
-  const count = "0";
-  const txCost = "1";
-
-  const decrement = useCallback(() => {}, []);
-
-  const increment = useCallback(() => {}, []);
-
-  const setCount = useCallback(() => {}, []);
-
-  const withdraw = useCallback(() => {}, []);
-
+  const {
+    metamask: { connectWallet, account, isValidNetwork },
+    contract: { txCost, count, decrement, increment, setCount, withdraw },
+  } = useMetaMask();
   return (
     <div className={styles.container}>
       <Head>
@@ -29,7 +19,7 @@ export default function Home() {
         <h1 className={styles.title}>Tiny Counter</h1>
 
         <p className={styles.description}>
-          Purely for MainNet deployment purposes
+          Purely for Mainnet deployment purposes
         </p>
 
         {!account || !isValidNetwork ? (
@@ -57,7 +47,7 @@ export default function Home() {
 
               <div onClick={setCount} className={styles.card}>
                 <h2>Set Count</h2>
-                <p>Transaction cost: {txCost}</p>
+                <p>Transaction cost: {txCost / (10 ** 9 * 10 ** 9)} ETH</p>
               </div>
 
               <div onClick={withdraw} className={styles.card}>
