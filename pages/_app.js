@@ -1,7 +1,12 @@
-import '../styles/globals.css'
+import { MetaMaskContext } from "../hooks/useMetaMask";
+import "../styles/globals.css";
 
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
+function TinyCounter({ Component, pageProps }) {
+  return (
+    <MetaMaskContext>
+      <Component {...pageProps} />
+    </MetaMaskContext>
+  );
 }
 
-export default MyApp
+export default TinyCounter;
