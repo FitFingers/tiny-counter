@@ -27,7 +27,7 @@ export default function Home() {
         <h1 className={styles.title}>Tiny Counter</h1>
 
         <p className={styles.description}>
-          Purely for Mainnet deployment purposes
+          A counter app, created simply for Mainnet deployment experience
         </p>
 
         {!account || !isValidNetwork ? (

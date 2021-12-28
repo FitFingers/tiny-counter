@@ -7,6 +7,7 @@ import {
 } from "react";
 import Web3 from "web3";
 import ABI from "util/abi.json";
+import getContractAddress from "util/get-contract-address";
 
 // ===================================================
 // USECONTEXT => ACCESS COMPONENT, HANDLERS
@@ -22,7 +23,12 @@ export default function useMetaMask() {
 // UTIL / OPTIONS
 // ===================================================
 
-const validNetworks = ["rinkeby", "private"];
+const validNetworks = ["main", "rinkeby", "private"];
+
+const addresses = {
+  main: "MAINNET",
+  rinkeby: "RINKEBY",
+};
 
 // ===================================================
 // METAMASK HOOK
@@ -142,7 +148,7 @@ export function MetaMaskContext({ children }) {
         window.web3 = new Web3(web3.currentProvider);
       } else {
         window.web3 = new Web3(
-          // new Web3.providers.HttpProvider("http://localhost:8545")
+          // new Web3.providers.HttpProvider("http://localhost:8545") // ganache
           window.ethereum
         );
       }
@@ -151,23 +157,30 @@ export function MetaMaskContext({ children }) {
     }
   }, []);
 
-  // use contract
+  // initialise and store a reference to the smart contract
   useEffect(() => {
+    if (!network) return;
+    const address = getContractAddress(network);
     try {
-      const _contract = new web3.eth.Contract(
-        ABI,
-        process.env.NEXT_PUBLIC_RINKEBY_CONTRACT_ADDRESS
-      );
+      const _contract = new web3.eth.Contract(ABI, address);
       updateMetaMask({
         contract: _contract,
       });
     } catch (err) {
       console.debug("DEBUG caught useContract error", { err });
     }
-  }, []);
+  }, [network]);
 
   // update the variables whenever something about metamask changes
   useEffect(() => refreshVariables(), [contract, network, account]);
+
+  // refresh the page on network change
+  useEffect(() => {
+    const handleNetworkChange = (chain) => window.location.reload();
+    window.ethereum?.on("chainChanged", handleNetworkChange);
+    return () =>
+      window.ethereum?.removeListener("chainChanged", handleNetworkChange);
+  }, []);
 
   return (
     <Context.Provider
